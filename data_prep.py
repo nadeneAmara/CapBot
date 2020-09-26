@@ -17,28 +17,31 @@ raw = raw[start:end]
 # Get set of unique characters as our features
 raw = raw.lower()
 raw_len = len(raw)
-#raw = raw.split()
-features = sorted(list(set(raw)))
-#print(features)
+features = sorted(list(set(word_tokenize(raw))))
+print(features)
 num_features = len(features)
 feature_index = dict((f, i) for i, f in enumerate(features))
 raw = tokenize.sent_tokenize(raw)
 
 # Length of character sequences, chunked out in steps of 3
-maxLen = 40
+#maxLen = 40
 step = 3
 sequences = []
 next_char = []
 
 # Generate overlapping sequences of words
+# TODO: Find longest sequence length, pad the rest
+maxLen = 0
 for sequence in raw:
     token_list = word_tokenize(sequence)
     i = 0
+    if (len(token_list) > maxLen):
+        maxLen = len(token_list)
     while (i < len(token_list)):
         n_gram = token_list[:i+1]
         sequences.append(n_gram)
         i = i + 1
-print(sequences)
+
 x = np.zeros((len(sequences), maxLen, num_features), dtype=np.bool)
 y = np.zeros((len(sequences), num_features), dtype=np.bool)
 
