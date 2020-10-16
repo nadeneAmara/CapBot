@@ -1,10 +1,10 @@
 from __future__ import division
+import string
 import nltk, re, pprint
 from nltk import tokenize
 from nltk import word_tokenize
 from urllib import request
-import numpy as np
-import string
+
 
 # Load in Jane Eyre from Project Gutenberg 
 url = "http://www.gutenberg.org/files/58585/58585-0.txt"
