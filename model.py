@@ -15,9 +15,9 @@ def create_model(maxLen, num_features):
     model.add(Dense(num_features, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='adam')
     return model
-
-#text = load_text()
-#s = get_sequences(text)
+'''
+text = load_text()
+s = get_sequences(text)
 filename = 'reddit_comments.txt'
 sequences = load_doc(filename)
 sequences = sequences.split('\n')
@@ -30,6 +30,7 @@ cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=path,
                                                  save_weights_only=False,
                                                  verbose=1)
 model.fit(x, y, epochs=150, callbacks=[cp_callback])
+'''
 
 def generate_seq_diverse(model, tokenizer, seq_length, seed_text, n_words):
   result = list()
@@ -59,7 +60,9 @@ def generate_seq_diverse(model, tokenizer, seq_length, seed_text, n_words):
   return in_text
 
 # load model 
-new_model = tf.keras.models.load_model("/content/drive/My Drive/captbot.ckpt")
+new_model = tf.keras.models.load_model("model/captbot.ckpt")
 # load tokenizer
-tokenizer = pickle.load(open('/content/drive/My Drive/tokenizer.pkl', 'rb'))
+tokenizer = pickle.load(open('model/tokenizer.pkl', 'rb'))
+generated2 = generate_seq_diverse(new_model, tokenizer, 149, "dog", 10)
+print(generated2)
 
