@@ -18,22 +18,23 @@ def create_model(maxLen, num_features):
     model.add(Dense(num_features, activation='softmax'))
     model.compile(loss='categorical_crossentropy', optimizer='adam')
     return model
-'''
-text = load_text()
-s = get_sequences(text)
-filename = 'reddit_comments.txt'
-sequences = load_doc(filename)
-sequences = sequences.split('\n')
-x, y, maxLen, num_features = prepare_sequences(sequences)
-model = create_model(maxLen, num_features)
 
-path = F"/content/drive/MyDrive/captbot.ckpt" 
-#Create a callback that saves the model's weights
-cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=path,
+def train_model():
+    text = load_text()
+    s = get_sequences(text)
+    filename = 'reddit_comments.txt'
+    sequences = load_doc(filename)
+    sequences = sequences.split('\n')
+    x, y, maxLen, num_features = prepare_sequences(sequences)
+    model = create_model(maxLen, num_features)
+
+    path = F"/content/drive/MyDrive/captbot.ckpt" 
+    #Create a callback that saves the model's weights
+    cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=path,
                                                  save_weights_only=False,
                                                  verbose=1)
-model.fit(x, y, epochs=150, callbacks=[cp_callback])
-'''
+    model.fit(x, y, epochs=150, callbacks=[cp_callback])
+
 def generate_seq(model, tokenizer, seq_length, seed_text, n_words):
     result = list()
     in_text = seed_text
@@ -104,30 +105,34 @@ def chooseSeedText(keywords):
             verbs.append(word)
     min_length = min(len(adj),len(nouns),len(verbs))
     i = random.randint(0,(min_length-1))
-    seed_text = adj[i] + ' ' + nouns[i] + ' ' + verbs[i]
+    seed_text = 'The' + ' ' + adj[i] + ' ' + nouns[i] + ' ' + verbs[i]
     return seed_text
 
+def prepare_keywords(image):
+    app = ClarifaiApp(api_key='6d610d6e33da4541b836c1cd0fff34f7')
+    model_clarifai = app.public_models.general_model
+    response = model_clarifai.predict_by_url(image)
+    keywords = []
+    for dict_item in response['outputs'][0]['data']['concepts']:
+        keywords.append(dict_item['name'])
+    for i in keywords:
+        print(i)
+    str1 = " ".join(keywords)
+    text1 = nltk.word_tokenize(str1)
+    tags = nltk.pos_tag(text1)
+    print(tags)
+    return tags
+
 image = "https://www.ctvnews.ca/polopoly_fs/1.5098407.1599687805!/httpImage/image.jpg_gen/derivatives/landscape_1020/image.jpg"
-app = ClarifaiApp(api_key='6d610d6e33da4541b836c1cd0fff34f7')
-model_clarifai = app.public_models.general_model
-response = model_clarifai.predict_by_url(image)
-keywords = []
-for dict_item in response['outputs'][0]['data']['concepts']:
-    keywords.append(dict_item['name'])
-str1 = " ".join(keywords)
-text1 = nltk.word_tokenize(str1)
-tags = nltk.pos_tag(text1)
-print(tags)
+tags = prepare_keywords(image)
 seed = chooseSeedText(tags)
 print(seed)
-
-for i in keywords:
-    print(i)
 # load model 
 new_model = tf.keras.models.load_model("model/captbot.ckpt")
 # load tokenizer
 tokenizer = pickle.load(open('model/tokenizer.pkl', 'rb'))
-#generated2 = generate_seq_diverse(new_model, tokenizer, 114, "The blue girl", 20)
-#generated = generate_seq(new_model, tokenizer, 114, "The blue girl", 20)
-#print(generated2)
+generated2 = generate_seq_diverse(new_model, tokenizer, 114, seed, 20)
+generated = generate_seq(new_model, tokenizer, 114, seed, 20)
+print(generated)
+print(generated2)
 
