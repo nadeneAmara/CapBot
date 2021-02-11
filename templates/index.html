@@ -1,6 +1,11 @@
 <div>
 	<h1>CaptBot</h1><br>
 	<p>Please enter your image url to generate a caption.</p>
-	<form action="{{ url_for('generate')}}"method="post"> 
+	<form action="{{ url_for('generate')}}"method="post">
+		<input type="text" name="url" placeholder="url" required="required"/>
+		<button type="submit" class="btn btn-primary btn-block btn-large">Generate Caption!</button>
 	</form>
+	<br>
+	<br>
+	{{ caption_text }}
 </div>
