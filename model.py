@@ -31,7 +31,7 @@ def train_model():
     x, y, maxLen, num_features = prepare_sequences(sequences)
     model = create_model(maxLen, num_features)
 
-    path = F"/content/drive/MyDrive/captbot.ckpt" 
+    path = F"model/captbot.ckpt" 
     #Create a callback that saves the model's weights
     cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=path,
                                                  save_weights_only=False,
