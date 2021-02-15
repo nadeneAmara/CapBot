@@ -10,6 +10,7 @@ from clarifai import rest
 from clarifai.rest import ClarifaiApp
 import nltk
 
+# Build a model with Embedding Layer and single LSTM layer
 def create_model(maxLen, num_features):
     model = Sequential()
     model.add(Embedding(num_features, 50, input_length=maxLen))
@@ -19,7 +20,9 @@ def create_model(maxLen, num_features):
     model.compile(loss='categorical_crossentropy', optimizer='adam')
     return model
 
+# Build dataset and split into sequences for model
 def train_model():
+    # If 'reddit_comments.txt' does not exist, generate corpus
     text = load_text()
     s = get_sequences(text)
     filename = 'reddit_comments.txt'
@@ -35,63 +38,62 @@ def train_model():
                                                  verbose=1)
     model.fit(x, y, epochs=150, callbacks=[cp_callback])
 
+# First method of generating sequences, append prediction for each word to result
 def generate_seq(model, tokenizer, seq_length, seed_text, n_words):
     result = list()
     in_text = seed_text
-    # generate a fixed number of words
+    # Generate a fixed number of words
     for _ in range(n_words):
-        # encode the text as integer
+        # Encode the text as integer
         encoded = tokenizer.texts_to_sequences([in_text])[0]
-        # truncate sequences to a fixed length
+        # Truncate sequences to a fixed length
         encoded = pad_sequences([encoded], maxlen=seq_length, truncating='pre')
-        # predict probabilities for each word
+        # Predict probabilities for each word
         yhat = model.predict_classes(encoded, verbose=0)
-        # map predicted word index to word
+        # Map predicted word index to word
         out_word = ''
         for word, index in tokenizer.word_index.items():
             if index == yhat:
                 out_word = word
                 break
-        # append to input
+        # Append to input
         in_text += ' ' + out_word
         result.append(out_word)
     return ' '.join(result)
 
+# Second method, consider all predictions and take one of better predictions at random
 def generate_seq_diverse(model, tokenizer, seq_length, seed_text, n_words):
   result = list()
   in_text = seed_text
-    # generate a fixed number of words
+    # Generate a fixed number of words
   for _ in range(n_words):
-        # encode the text as integer
+        # Encode the text as integer
     encoded = tokenizer.texts_to_sequences([in_text])[0]
-        # truncate sequences to a fixed length
+        # Truncate sequences to a fixed length
     encoded = pad_sequences([encoded], maxlen=seq_length, truncating='pre')
-        # predict probabilities for each word
+        # Predict probabilities for each word
     probabilities = model.predict(encoded)
-    print(probabilities)
     predictions = []
+    # Generate all possible predictions
     for word, index in tokenizer.word_index.items():
       predictions.append({'text': in_text + ' ' + word, 
                           'score': probabilities[0][index]})
     predictions = sorted(predictions, key=lambda p: p['score'], reverse=True)
-    #print(predictions)
     top_predictions = []
     top_score = predictions[0]['score']
-    print(top_score)
-    print("top_score: %d " % top_score)
+    # Predictions must have minimal score of 0.35
     min_score = 0.35
     rand_value = random.randint(int(min_score * 1000),1000)
-    print("rand_value: %d " % rand_value)
+    # If predictions meets minimal score, add to potential final predictions
     for p in predictions:
       if p['score'] >= rand_value/1000*top_score:
-        print(rand_value/1000*top_score)
-        print("greater than or equal to: %d " % (rand_value/1000*top_score))
-        print("p_score: %d " % p['score'])
         top_predictions.append(p)
+    # Take one at random
     random.shuffle(top_predictions)
     in_text = top_predictions[0]['text']
   return in_text
 
+# Filter Clarifai keywords by type using NLTK, construct seed text using adj + noun + verb structure
 def chooseSeedText(keywords):
     adj = []
     nouns = []
@@ -104,10 +106,12 @@ def chooseSeedText(keywords):
         elif (tag == 'VB' or tag == 'VBP' or tag == 'VBG'):
             verbs.append(word)
     min_length = min(len(adj),len(nouns),len(verbs))
+    # Pick words at random to have variety
     i = random.randint(0,(min_length-1))
     seed_text = 'The' + ' ' + adj[i] + ' ' + nouns[i] + ' ' + verbs[i]
     return seed_text
 
+# Input an image URL to grab keywords using Clarifai. Then generate their tags using NlTK.
 def prepare_keywords(image):
     app = ClarifaiApp(api_key='6d610d6e33da4541b836c1cd0fff34f7')
     model_clarifai = app.public_models.general_model
@@ -115,24 +119,20 @@ def prepare_keywords(image):
     keywords = []
     for dict_item in response['outputs'][0]['data']['concepts']:
         keywords.append(dict_item['name'])
-    for i in keywords:
-        print(i)
     str1 = " ".join(keywords)
     text1 = nltk.word_tokenize(str1)
     tags = nltk.pos_tag(text1)
-    print(tags)
     return tags
 
-image = "https://www.ctvnews.ca/polopoly_fs/1.5098407.1599687805!/httpImage/image.jpg_gen/derivatives/landscape_1020/image.jpg"
-tags = prepare_keywords(image)
-seed = chooseSeedText(tags)
-print(seed)
-# load model 
-new_model = tf.keras.models.load_model("model/captbot.ckpt")
-# load tokenizer
-tokenizer = pickle.load(open('model/tokenizer.pkl', 'rb'))
-generated2 = generate_seq_diverse(new_model, tokenizer, 114, seed, 20)
-generated = generate_seq(new_model, tokenizer, 114, seed, 20)
-print(generated)
-print(generated2)
+def main(url):
+    image = url
+    tags = prepare_keywords(image)
+    seed = chooseSeedText(tags)
+    # load model 
+    new_model = tf.keras.models.load_model("model/captbot.ckpt")
+    # load tokenizer
+    tokenizer = pickle.load(open('model/tokenizer.pkl', 'rb'))
+    generated2 = generate_seq_diverse(new_model, tokenizer, 114, seed, 7)
+    generated = generate_seq(new_model, tokenizer, 114, seed, 7)
+    return generated2
 

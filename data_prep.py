@@ -24,7 +24,7 @@ def request_comments(**kwargs):
   comments = data['data']
   return comments
 
-# Get text from comments
+# Get text from comments from given subreddits
 def get_comment_set(comment_number):
   sr_names = ["aww","wholesomememes","funny", "interestingasfuck", "EarthPorn"]
   comment_bodies = ""
@@ -81,7 +81,7 @@ def get_sequences(raw):
     save_doc(sequences, filename)
     return sequences
 
-# Map our words to integer values and split sequences into 
+# Map our words to integer values and split sequences into input and labels
 def prepare_sequences(sequences):
     tokenizer = Tokenizer()
     tokenizer.fit_on_texts(sequences)
