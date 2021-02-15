@@ -12,7 +12,7 @@ def index():
 def generate():
     url = flask_request.form['url']
     caption = main(url)
-    return render_template('index.html', caption_text = '$ {}'.format(caption))
+    return render_template('index.html', caption_text = '{}'.format(caption))
 
 if __name__ == "__main__":
     app.run(debug=True)
