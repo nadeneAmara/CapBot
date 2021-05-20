@@ -113,7 +113,7 @@ def chooseSeedText(keywords):
 
 # Input an image URL to grab keywords using Clarifai. Then generate their tags using NlTK.
 def prepare_keywords(image):
-    app = ClarifaiApp(api_key='6d610d6e33da4541b836c1cd0fff34f7')
+    app = ClarifaiApp(api_key='a5288575bd8b453285d62995dd09cb9a')
     model_clarifai = app.public_models.general_model
     response = model_clarifai.predict_by_url(image)
     keywords = []
