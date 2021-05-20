@@ -6,8 +6,6 @@ from keras.preprocessing.text import Tokenizer
 from keras.preprocessing.sequence import pad_sequences
 import random
 from data_prep import *
-from clarifai import rest
-from clarifai.rest import ClarifaiApp
 import nltk
 from clarifai_grpc.channel.clarifai_channel import ClarifaiChannel
 from clarifai_grpc.grpc.api import service_pb2_grpc
