@@ -9,6 +9,12 @@ from data_prep import *
 from clarifai import rest
 from clarifai.rest import ClarifaiApp
 import nltk
+from clarifai_grpc.channel.clarifai_channel import ClarifaiChannel
+from clarifai_grpc.grpc.api import service_pb2_grpc
+from clarifai_grpc.grpc.api import service_pb2, resources_pb2
+from clarifai_grpc.grpc.api.status import status_code_pb2
+
+stub = service_pb2_grpc.V2Stub(ClarifaiChannel.get_grpc_channel())
 
 # Build a model with Embedding Layer and single LSTM layer
 def create_model(maxLen, num_features):
@@ -113,12 +119,23 @@ def chooseSeedText(keywords):
 
 # Input an image URL to grab keywords using Clarifai. Then generate their tags using NlTK.
 def prepare_keywords(image):
-    app = ClarifaiApp(api_key='a5288575bd8b453285d62995dd09cb9a')
-    model_clarifai = app.public_models.general_model
+    #app = ClarifaiApp(api_key='a5288575bd8b453285d62995dd09cb9a')
+    #model_clarifai = app.public_models.general_model
+    metadata = (('authorization', 'Key a5288575bd8b453285d62995dd09cb9a'),)
+    request = service_pb2.PostModelOutputsRequest(
+    # This is the model ID of a publicly available General model. You may use any other public or custom model ID.
+    model_id='aaa03c23b3724a16a56b629203edc62c',
+    inputs=[
+      resources_pb2.Input(data=resources_pb2.Data(image=resources_pb2.Image(url=image)))
+    ])
+    response = stub.PostModelOutputs(request, metadata=metadata)
+
     response = model_clarifai.predict_by_url(image)
     keywords = []
-    for dict_item in response['outputs'][0]['data']['concepts']:
-        keywords.append(dict_item['name'])
+    #for dict_item in response['outputs'][0]['data']['concepts']:
+    for dict_item in response.outputs[0].data.concepts:
+        #keywords.append(dict_item['name'])
+        keywords.append(dict_item.name)
     str1 = " ".join(keywords)
     text1 = nltk.word_tokenize(str1)
     tags = nltk.pos_tag(text1)
