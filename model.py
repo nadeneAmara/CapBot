@@ -109,16 +109,26 @@ def chooseSeedText(keywords):
             nouns.append(word)
         elif (tag == 'VB' or tag == 'VBP' or tag == 'VBG'):
             verbs.append(word)
+            
     min_length = min(len(adj),len(nouns),len(verbs))
-    # Pick words at random to have variety
-    i = random.randint(0,(min_length-1))
-    seed_text = 'The' + ' ' + adj[i] + ' ' + nouns[i] + ' ' + verbs[i]
-    return seed_text
+     # Pick words at random to have variety
+    if (min_length == 0): 
+        i = 0
+        seed_text = 'The' + ' ' + adj[i] + ' ' + nouns[i]
+        
+    else:
+        i = random.randint(0,(min_length-1))
+        seed_texts = []
+        seed_texts.append(nouns[i] + '') 
+        seed_texts.append('The' + ' ' + adj[i] + ' ' + nouns[i])
+        seed_texts.append(nouns[i] + ' ' + verbs[i])
+        seed_texts.append('The' + ' ' + adj[i] + ' ' + nouns[i] + ' ' + verbs[i])
+        random.shuffle(seed_texts)
+        seed_text = seed_texts[0]
+    return seed_text 
 
 # Input an image URL to grab keywords using Clarifai. Then generate their tags using NlTK.
 def prepare_keywords(image):
-    #app = ClarifaiApp(api_key='a5288575bd8b453285d62995dd09cb9a')
-    #model_clarifai = app.public_models.general_model
     metadata = (('authorization', 'Key a5288575bd8b453285d62995dd09cb9a'),)
     request = service_pb2.PostModelOutputsRequest(
     # This is the model ID of a publicly available General model. You may use any other public or custom model ID.
@@ -130,9 +140,7 @@ def prepare_keywords(image):
 
     response = model_clarifai.predict_by_url(image)
     keywords = []
-    #for dict_item in response['outputs'][0]['data']['concepts']:
     for dict_item in response.outputs[0].data.concepts:
-        #keywords.append(dict_item['name'])
         keywords.append(dict_item.name)
     str1 = " ".join(keywords)
     text1 = nltk.word_tokenize(str1)
